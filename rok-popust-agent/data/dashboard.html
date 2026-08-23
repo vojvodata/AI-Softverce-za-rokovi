@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="mk">
+<html lang="mk" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -457,7 +457,7 @@
 
   <div class="page-nav" id="pageNav">
     <button class="page-nav-btn active" data-page="overview">Преглед</button>
-    <button class="page-nav-btn" data-page="stickers">Ценовни стикери</button>
+    <button class="page-nav-btn" data-page="stickers">Стикери за попусти</button>
     <button class="page-nav-btn" data-page="intake">Прием на стока</button>
   </div>
 
@@ -493,7 +493,7 @@
 
   <div class="page" id="page-stickers" style="display:none">
     <div class="panel">
-      <h2>Ценовни стикери</h2>
+      <h2>Стикери за попусти</h2>
       <div class="panel-sub" id="stickersSub">Автоматски генерирани стикери за производите со активен попуст - за лепење на рафт.</div>
       <div class="sticker-grid" id="stickerGrid"></div>
     </div>
@@ -508,7 +508,7 @@
         <label for="intakeBarcode">Баркод</label>
         <input id="intakeBarcode" type="text" inputmode="numeric" autocomplete="off" placeholder="Скенирај или внеси баркод...">
         <button id="intakeLookupBtn" class="tab-btn">Пронајди</button>
-        <button id="cameraScanBtn" class="tab-btn">📷 Скенирај со камера</button>
+        <button id="cameraScanBtn" class="tab-btn">Скенирај баркод</button>
       </div>
       <div id="intakeResult" class="intake-result" style="display:none"></div>
       <div id="intakeError" class="intake-error" style="display:none"></div>
