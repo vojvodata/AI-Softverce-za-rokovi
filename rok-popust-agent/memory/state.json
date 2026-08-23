@@ -1,0 +1,39 @@
+{
+  "last_run": "2026-08-23",
+  "processed": [],
+  "pending": [
+    "Омекнувач Lenor Gold Orchid 1.239л",
+    "Пијалак негазиран праска Takovo 1л",
+    "Топено сирење President 140гр",
+    "Павлака кисела 20% Bella Farm 400гр",
+    "Боранија жолта сечкана Sunny Fantasy 450гр (замрзната)",
+    "Напиток инстант вкус лимон Fiesta 200гр",
+    "Јогурт 2.8% масленост Bella Farm 1кг",
+    "Спреј за заштита од комарци Chicco 100мл",
+    "Тортици со кокос и какао прелив Midi 350гр"
+  ],
+  "stats": {
+    "total_processed": 43,
+    "total_discount_value": 360.27,
+    "last_result": "14 засегнати, 9 за повлекување"
+  },
+  "config": {
+    "discount_tiers": [
+      {
+        "days_min": 11,
+        "days_max": 15,
+        "discount_percent": 10
+      },
+      {
+        "days_min": 6,
+        "days_max": 10,
+        "discount_percent": 20
+      },
+      {
+        "days_min": 0,
+        "days_max": 5,
+        "discount_percent": 40
+      }
+    ]
+  }
+}

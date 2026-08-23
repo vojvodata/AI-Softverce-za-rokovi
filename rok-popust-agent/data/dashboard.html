@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rok-Popust Dashboard</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:      #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-1:       #2a78d6;
+    --good:           #0ca30c;
+    --warning:        #fab219;
+    --serious:        #ec835a;
+    --critical:       #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page-plane:      #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --series-1:       #3987e5;
+      --good:           #0ca30c;
+      --warning:        #fab219;
+      --serious:        #ec835a;
+      --critical:       #e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page-plane:      #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --series-1:       #3987e5;
+    --good:           #0ca30c;
+    --warning:        #fab219;
+    --serious:        #ec835a;
+    --critical:       #e66767;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    padding: 32px 24px 48px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; position: relative; }
+  .brand-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .brand-dot { width: 10px; height: 10px; border-radius: 3px; background: var(--series-1); flex: none; }
+  .brand-name { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  h1 { font-size: 25px; margin: 0 0 5px; font-weight: 650; letter-spacing: -0.01em; }
+  .subtitle { color: var(--text-secondary); font-size: 13.5px; }
+  .theme-toggle {
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  /* page nav */
+  .page-nav { display: flex; gap: 8px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+  .page-nav-btn {
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    padding: 10px 4px;
+    margin-right: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .page-nav-btn.active { color: var(--text-primary); border-bottom-color: var(--series-1); }
+
+  /* price stickers */
+  .sticker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 16px;
+  }
+  .sticker-card {
+    position: relative;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 16px 14px;
+    overflow: hidden;
+  }
+  .sticker-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--critical);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .sticker-name {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    margin: 0 46px 14px 0;
+    min-height: 35px;
+  }
+  .sticker-old-price { font-size: 12.5px; color: var(--text-muted); text-decoration: line-through; }
+  .sticker-new-price { font-size: 26px; font-weight: 750; color: var(--critical); line-height: 1.15; }
+  .sticker-new-price .unit { font-size: 14px; font-weight: 600; margin-left: 3px; }
+  .sticker-footer {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .sticker-barcode {
+    flex: 1;
+    height: 22px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--text-primary) 0px, var(--text-primary) 2px,
+      transparent 2px, transparent 4px,
+      var(--text-primary) 4px, var(--text-primary) 5px,
+      transparent 5px, transparent 8px,
+      var(--text-primary) 8px, var(--text-primary) 11px,
+      transparent 11px, transparent 13px
+    );
+    opacity: 0.85;
+  }
+  .sticker-sku { font-size: 10.5px; color: var(--text-muted); font-family: ui-monospace, "SF Mono", Consolas, monospace; white-space: nowrap; }
+  .sticker-empty { color: var(--text-muted); font-size: 13.5px; padding: 24px 0; text-align: center; }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .tile {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .tile-top { display: flex; align-items: center; justify-content: space-between; }
+  .tile .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .tile .value {
+    font-size: 28px;
+    font-weight: 650;
+    font-variant-numeric: proportional-nums;
+  }
+  .tile .value.critical { color: var(--critical); }
+  .tile .foot { font-size: 12px; color: var(--text-secondary); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+  .tile .delta { font-weight: 600; }
+  .tile .delta.up { color: var(--good); }
+  .tile .delta.down { color: var(--critical); }
+  .icon-chip {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+  }
+  .icon-chip svg { width: 16px; height: 16px; }
+  .panel {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 22px 20px;
+    margin-bottom: 16px;
+  }
+  .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 2px; }
+  .panel h2 {
+    font-size: 15.5px;
+    margin: 0 0 4px;
+    font-weight: 650;
+  }
+  .panel .panel-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; }
+  .legend-row { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-secondary); margin-bottom: 14px; }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+  .tabs { display: flex; gap: 8px; margin: 16px 0 14px; flex-wrap: wrap; }
+  .tab-btn {
+    border: 1px solid var(--border);
+    background: var(--page-plane);
+    color: var(--text-secondary);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .tab-btn.active { background: var(--text-primary); color: var(--surface-1); border-color: var(--text-primary); }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px; }
+  table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--gridline); }
+  th { color: var(--text-muted); font-weight: 500; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.02em; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .muted { color: var(--text-secondary); }
+  tr.urgent td { background: color-mix(in srgb, var(--critical) 7%, transparent); }
+  tr td:first-child { font-weight: 500; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--critical);
+    font-weight: 600;
+  }
+  .cat-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    color: white;
+  }
+  footer {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 16px;
+    line-height: 1.6;
+  }
+  /* ---- responsive (телефон/таблет) ---- */
+  @media (max-width: 720px) {
+    body { padding: 20px 14px 36px; }
+    h1 { font-size: 20px; }
+    .subtitle { font-size: 12.5px; }
+    header { align-items: center; }
+    .theme-toggle { padding: 6px 10px; font-size: 12.5px; }
+
+    .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .tile { padding: 13px 14px; }
+    .tile .value { font-size: 23px; }
+
+    .panel { padding: 16px 14px 14px; border-radius: 12px; }
+    .panel h2 { font-size: 14.5px; }
+    .tab-btn { padding: 5px 11px; font-size: 12px; }
+  }
+
+  @media (max-width: 420px) {
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand-row">
+    <span class="brand-dot"></span>
+    <span class="brand-name">Rok-Popust Agent</span>
+  </div>
+  <header>
+    <div>
+      <h1>Автоматска заштита на маржа пред истек на рок</h1>
+      <div class="subtitle" id="subtitle"></div>
+    </div>
+    <button class="theme-toggle" id="themeToggle">🌓 Смени тема</button>
+  </header>
+
+  <div class="page-nav" id="pageNav">
+    <button class="page-nav-btn active" data-page="overview">Преглед</button>
+    <button class="page-nav-btn" data-page="stickers">Ценовни стикери</button>
+  </div>
+
+  <div class="page" id="page-overview">
+    <div class="kpi-row" id="kpiRow"></div>
+
+    <div class="panel">
+      <h2>Производи</h2>
+      <div class="panel-sub">Најблизок рок горе. Процентот во значката е реално применетиот попуст (по бонус за залиха и заштита на маржа).</div>
+      <div class="tabs" id="tableTabs">
+        <button class="tab-btn active" data-tab="all">Сите</button>
+        <button class="tab-btn" data-tab="discount">Со попуст</button>
+        <button class="tab-btn" data-tab="expired">За повлекување</button>
+      </div>
+      <div class="table-scroll">
+        <table id="prodTable">
+          <thead>
+            <tr>
+              <th>Производ</th>
+              <th>SKU</th>
+              <th class="num">Дена до истек</th>
+              <th class="num">Залиха</th>
+              <th class="num">Стара цена</th>
+              <th class="num">Нова цена</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="prodBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="page-stickers" style="display:none">
+    <div class="panel">
+      <h2>Ценовни стикери</h2>
+      <div class="panel-sub" id="stickersSub">Автоматски генерирани стикери за производите со активен попуст - за лепење на рафт.</div>
+      <div class="sticker-grid" id="stickerGrid"></div>
+    </div>
+  </div>
+
+  <footer id="footerNote"></footer>
+</div>
+
+<script>
+const DATA = {"products": [{"product": "Вода газирана Zagori 1,5Л (промо пакет)", "sku": "KAM-1001", "category": "Пијалоци", "price": 125.0, "cost": 96.26, "stock": 25, "expiryDate": "2026-09-15", "daysToExpiry": 23, "discountPercent": 0.0, "newPrice": 125.0, "status": "во ред", "note": ""}, {"product": "Детергент течен Belil за обоени алишта 1,8л", "sku": "KAM-1002", "category": "Хемија", "price": 289.0, "cost": 220.67, "stock": 29, "expiryDate": "2027-05-11", "daysToExpiry": 261, "discountPercent": 0.0, "newPrice": 289.0, "status": "во ред", "note": ""}, {"product": "Детергент течен Belil универзален 1,8л", "sku": "KAM-1003", "category": "Хемија", "price": 289.0, "cost": 210.47, "stock": 21, "expiryDate": "2026-08-24", "daysToExpiry": 1, "discountPercent": 19.9, "newPrice": 231.52, "status": "40% попуст", "note": "+5pp залиха (21 парчиња); заштитена маржа"}, {"product": "Кечап Polimark благ 1кг", "sku": "KAM-1004", "category": "Прехрана", "price": 105.0, "cost": 81.62, "stock": 18, "expiryDate": "2027-04-19", "daysToExpiry": 239, "discountPercent": 0.0, "newPrice": 105.0, "status": "во ред", "note": ""}, {"product": "Кечап Polimark пица 1кг", "sku": "KAM-1005", "category": "Прехрана", "price": 105.0, "cost": 83.21, "stock": 18, "expiryDate": "2027-02-01", "daysToExpiry": 162, "discountPercent": 0.0, "newPrice": 105.0, "status": "во ред", "note": ""}, {"product": "Наполитанка Swisslion Eurovafel 42гр", "sku": "KAM-1006", "category": "Слатки", "price": 19.0, "cost": 14.73, "stock": 12, "expiryDate": "2026-08-29", "daysToExpiry": 6, "discountPercent": 14.7, "newPrice": 16.2, "status": "20% попуст", "note": "+5pp залиха (12 парчиња); заштитена маржа"}, {"product": "Омекнувач Lenor Gold Orchid 1.239л", "sku": "KAM-1007", "category": "Хемија", "price": 219.0, "cost": 153.56, "stock": 6, "expiryDate": "2026-08-19", "daysToExpiry": -4, "discountPercent": 0.0, "newPrice": 219.0, "status": "ЗА ПОВЛЕКУВАЊЕ", "note": ""}, {"product": "Омекнувач Lenor Лаванда 1.491л", "sku": "KAM-1008", "category": "Хемија", "price": 219.0, "cost": 154.72, "stock": 12, "expiryDate": "2026-09-30", "daysToExpiry": 38, "discountPercent": 0.0, "newPrice": 219.0, "status": "во ред", "note": ""}, {"product": "Омекнувач Lenor Spring 1.491л", "sku": "KAM-1009", "category": "Хемија", "price": 219.0, "cost": 167.26, "stock": 35, "expiryDate": "2028-06-29", "daysToExpiry": 676, "discountPercent": 0.0, "newPrice": 219.0, "status": "во ред", "note": ""}, {"product": "Флипс дражеи чоколадирани Stobi Flips 60гр", "sku": "KAM-1010", "category": "Слатки", "price": 32.0, "cost": 23.68, "stock": 23, "expiryDate": "2026-12-19", "daysToExpiry": 118, "discountPercent": 0.0, "newPrice": 32.0, "status": "во ред", "note": ""}, {"product": "Грозје бело (сорта Килибар) 1кг", "sku": "KAM-1011", "category": "Овошје и зеленчук", "price": 55.0, "cost": 45.98, "stock": 31, "expiryDate": "2026-08-28", "daysToExpiry": 5, "discountPercent": 8.0, "newPrice": 50.58, "status": "40% попуст", "note": "+10pp залиха (31 парчиња); заштитена маржа"}, {"product": "Детергент за алишта Bioaktiv 6кг", "sku": "KAM-1012", "category": "Хемија", "price": 385.0, "cost": 291.53, "stock": 11, "expiryDate": "2026-08-24", "daysToExpiry": 1, "discountPercent": 16.7, "newPrice": 320.68, "status": "40% попуст", "note": "+5pp залиха (11 парчиња); заштитена маржа"}, {"product": "Кашкавал мешан Bella Farm 1кг", "sku": "KAM-1013", "category": "Млечни производи", "price": 439.0, "cost": 366.32, "stock": 7, "expiryDate": "2026-09-05", "daysToExpiry": 13, "discountPercent": 8.2, "newPrice": 402.95, "status": "10% попуст", "note": "заштитена маржа"}, {"product": "Пиво светло Edelmeister 500мл", "sku": "KAM-1014", "category": "Пијалоци", "price": 34.0, "cost": 25.47, "stock": 20, "expiryDate": "2026-11-29", "daysToExpiry": 98, "discountPercent": 0.0, "newPrice": 34.0, "status": "во ред", "note": ""}, {"product": "Плешка свинска без коска 1кг", "sku": "KAM-1015", "category": "Месо", "price": 268.0, "cost": 225.58, "stock": 15, "expiryDate": "2026-08-25", "daysToExpiry": 2, "discountPercent": 7.4, "newPrice": 248.14, "status": "40% попуст", "note": "+5pp залиха (15 парчиња); заштитена маржа"}, {"product": "Пилешки копан со надкопан Perutnina Ptuj 1кг", "sku": "KAM-1016", "category": "Месо", "price": 172.0, "cost": 147.44, "stock": 69, "expiryDate": "2026-09-04", "daysToExpiry": 12, "discountPercent": 5.7, "newPrice": 162.18, "status": "10% попуст", "note": "+10pp залиха (69 парчиња); заштитена маржа"}, {"product": "Пијалак негазиран праска Takovo 1л", "sku": "KAM-1017", "category": "Пијалоци", "price": 44.0, "cost": 33.98, "stock": 33, "expiryDate": "2026-08-21", "daysToExpiry": -2, "discountPercent": 0.0, "newPrice": 44.0, "status": "ЗА ПОВЛЕКУВАЊЕ", "note": ""}, {"product": "Топено сирење President 140гр", "sku": "KAM-1018", "category": "Млечни производи", "price": 69.0, "cost": 59.45, "stock": 20, "expiryDate": "2026-08-20", "daysToExpiry": -3, "discountPercent": 0.0, "newPrice": 69.0, "status": "ЗА ПОВЛЕКУВАЊЕ", "note": ""}, {"product": "Нектар овошен коктел Takovo 1л", "sku": "KAM-1019", "category": "Пијалоци", "price": 44.0, "cost": 31.85, "stock": 35, "expiryDate": "2026-09-14", "daysToExpiry": 22, "discountPercent": 0.0, "newPrice": 44.0, "status": "во ред", "note": ""}, {"product": "Тиквица 1кг", "sku": "KAM-1020", "category": "Овошје и зеленчук", "price": 12.0, "cost": 9.67, "stock": 21, "expiryDate": "2026-09-03", "daysToExpiry": 11, "discountPercent": 11.3, "newPrice": 10.64, "status": "10% попуст", "note": "+5pp залиха (21 парчиња); заштитена маржа"}, {"product": "Стек мисиркин Vindon 500гр", "sku": "KAM-1021", "category": "Месо", "price": 345.0, "cost": 296.95, "stock": 30, "expiryDate": "2026-09-27", "daysToExpiry": 35, "discountPercent": 0.0, "newPrice": 345.0, "status": "во ред", "note": ""}, {"product": "Павлака кисела 20% Bella Farm 400гр", "sku": "KAM-1022", "category": "Млечни производи", "price": 54.0, "cost": 42.48, "stock": 7, "expiryDate": "2026-08-15", "daysToExpiry": -8, "discountPercent": 0.0, "newPrice": 54.0, "status": "ЗА ПОВЛЕКУВАЊЕ", "note": ""}, {"product": "Пијалак газиран Coca Cola (промо пакет)", "sku": "KAM-1023", "category": "Пијалоци", "price": 165.0, "cost": 120.91, "stock": 15, "expiryDate": "2027-02-08", "daysToExpiry": 169, "discountPercent": 0.0, "newPrice": 165.0, "status": "во ред", "note": ""}, {"product": "Портокал (сорта Валенсиа) 1кг", "sku": "KAM-1024", "category": "Овошје и зеленчук", "price": 42.0, "cost": 34.97, "stock": 20, "expiryDate": "2026-09-04", "daysToExpiry": 12, "discountPercent": 8.4, "newPrice": 38.47, "status": "10% попуст", "note": "+5pp залиха (20 парчиња); заштитена маржа"}, {"product": "Алка за заштита од комарци Chicco", "sku": "KAM-1025", "category": "Хигиена", "price": 77.0, "cost": 54.38, "stock": 7, "expiryDate": "2027-08-29", "daysToExpiry": 371, "discountPercent": 0.0, "newPrice": 77.0, "status": "во ред", "note": ""}, {"product": "Боранија жолта сечкана Sunny Fantasy 450гр (замрзната)", "sku": "KAM-1026", "category": "Замрзнато", "price": 33.0, "cost": 24.6, "stock": 7, "expiryDate": "2026-08-14", "daysToExpiry": -9, "discountPercent": 0.0, "newPrice": 33.0, "status": "ЗА ПОВЛЕКУВАЊЕ", "note": ""}, {"product": "Гулаш говедски Solis 400гр (конзерва)", "sku": "KAM-1027", "category": "Конзервирано", "price": 125.0, "cost": 99.18, "stock": 44, "expiryDate": "2026-11-23", "daysToExpiry": 92, "discountPercent": 0.0, "newPrice": 125.0, "status": "во ред", "note": ""}, {"product": "Десертен производ Kri Kri 900гр", "sku": "KAM-1028", "category": "Млечни производи", "price": 129.0, "cost": 100.85, "stock": 35, "expiryDate": "2026-09-16", "daysToExpiry": 24, "discountPercent": 0.0, "newPrice": 129.0, "status": "во ред", "note": ""}, {"product": "Напиток инстант вкус лимон Fiesta 200гр", "sku": "KAM-1029", "category": "Пијалоци", "price": 45.0, "cost": 33.15, "stock": 37, "expiryDate": "2026-08-20", "daysToExpiry": -3, "discountPercent": 0.0, "newPrice": 45.0, "status": "ЗА ПОВЛЕКУВАЊЕ", "note": ""}, {"product": "Напиток инстант вкус портокал Fiesta 200гр", "sku": "KAM-1030", "category": "Пијалоци", "price": 45.0, "cost": 35.9, "stock": 10, "expiryDate": "2027-03-08", "daysToExpiry": 197, "discountPercent": 0.0, "newPrice": 45.0, "status": "во ред", "note": ""}, {"product": "Јогурт 2.8% масленост Bella Farm 1кг", "sku": "KAM-1031", "category": "Млечни производи", "price": 50.0, "cost": 40.67, "stock": 11, "expiryDate": "2026-08-20", "daysToExpiry": -3, "discountPercent": 0.0, "newPrice": 50.0, "status": "ЗА ПОВЛЕКУВАЊЕ", "note": ""}, {"product": "Кафе инстант Nescafe Classic 200гр", "sku": "KAM-1032", "category": "Прехрана", "price": 329.0, "cost": 238.3, "stock": 12, "expiryDate": "2026-08-26", "daysToExpiry": 3, "discountPercent": 20.3, "newPrice": 262.13, "status": "40% попуст", "note": "+5pp залиха (12 парчиња); заштитена маржа"}, {"product": "Колачиња микс кокос/лешник Leona 350гр", "sku": "KAM-1033", "category": "Слатки", "price": 59.0, "cost": 43.78, "stock": 77, "expiryDate": "2026-09-21", "daysToExpiry": 29, "discountPercent": 0.0, "newPrice": 59.0, "status": "во ред", "note": ""}, {"product": "Колачиња фрути Leona 350гр", "sku": "KAM-1034", "category": "Слатки", "price": 59.0, "cost": 45.61, "stock": 22, "expiryDate": "2026-10-16", "daysToExpiry": 54, "discountPercent": 0.0, "newPrice": 59.0, "status": "во ред", "note": ""}, {"product": "Риба пастрмка бела Royal Fish 1кг", "sku": "KAM-1035", "category": "Риба", "price": 349.0, "cost": 304.06, "stock": 18, "expiryDate": "2026-09-03", "daysToExpiry": 11, "discountPercent": 4.2, "newPrice": 334.47, "status": "10% попуст", "note": "+5pp залиха (18 парчиња); заштитена маржа"}, {"product": "Спреј за заштита од комарци Chicco 100мл", "sku": "KAM-1036", "category": "Хигиена", "price": 305.0, "cost": 207.09, "stock": 18, "expiryDate": "2026-08-21", "daysToExpiry": -2, "discountPercent": 0.0, "newPrice": 305.0, "status": "ЗА ПОВЛЕКУВАЊЕ", "note": ""}, {"product": "Спреј за сончање СПФ 30 Lalin 250мл", "sku": "KAM-1037", "category": "Хигиена", "price": 219.0, "cost": 146.26, "stock": 38, "expiryDate": "2026-08-28", "daysToExpiry": 5, "discountPercent": 26.5, "newPrice": 160.89, "status": "40% попуст", "note": "+10pp залиха (38 парчиња); заштитена маржа"}, {"product": "Стапчиња со морска сол и мед Elephant 180гр", "sku": "KAM-1038", "category": "Слатки", "price": 63.0, "cost": 43.66, "stock": 10, "expiryDate": "2026-08-26", "daysToExpiry": 3, "discountPercent": 23.8, "newPrice": 48.03, "status": "40% попуст", "note": "+5pp залиха (10 парчиња); заштитена маржа"}, {"product": "Суџук говедски насечкан Златиборац 200гр", "sku": "KAM-1039", "category": "Месо", "price": 142.0, "cost": 125.1, "stock": 26, "expiryDate": "2026-09-27", "daysToExpiry": 35, "discountPercent": 0.0, "newPrice": 142.0, "status": "во ред", "note": ""}, {"product": "Тортици со кокос и какао прелив Midi 350гр", "sku": "KAM-1040", "category": "Слатки", "price": 109.0, "cost": 80.0, "stock": 13, "expiryDate": "2026-08-13", "daysToExpiry": -10, "discountPercent": 0.0, "newPrice": 109.0, "status": "ЗА ПОВЛЕКУВАЊЕ", "note": ""}, {"product": "Чипс пченкарен солен Saluti 150гр", "sku": "KAM-1041", "category": "Слатки", "price": 34.0, "cost": 25.6, "stock": 22, "expiryDate": "2026-10-24", "daysToExpiry": 62, "discountPercent": 0.0, "newPrice": 34.0, "status": "во ред", "note": ""}, {"product": "Чипс пченкарен чили Saluti 150гр", "sku": "KAM-1042", "category": "Слатки", "price": 34.0, "cost": 25.32, "stock": 9, "expiryDate": "2026-08-25", "daysToExpiry": 2, "discountPercent": 18.1, "newPrice": 27.85, "status": "40% попуст", "note": "заштитена маржа"}, {"product": "Чипс пченкарен пица Saluti 150гр", "sku": "KAM-1043", "category": "Слатки", "price": 34.0, "cost": 24.33, "stock": 24, "expiryDate": "2026-11-14", "daysToExpiry": 83, "discountPercent": 0.0, "newPrice": 34.0, "status": "во ред", "note": ""}], "history": [{"date": "2026-08-12", "timestamp": "2026-08-12T08:00:00", "total": 43, "affected": 16, "expired": 4, "totalDiscountValue": 774.98, "avgDiscountPercent": 27.9}, {"date": "2026-08-13", "timestamp": "2026-08-13T08:00:00", "total": 43, "affected": 17, "expired": 4, "totalDiscountValue": 834.99, "avgDiscountPercent": 17.8}, {"date": "2026-08-14", "timestamp": "2026-08-14T08:00:00", "total": 43, "affected": 18, "expired": 1, "totalDiscountValue": 613.84, "avgDiscountPercent": 16.4}, {"date": "2026-08-15", "timestamp": "2026-08-15T08:00:00", "total": 43, "affected": 17, "expired": 0, "totalDiscountValue": 627.04, "avgDiscountPercent": 23.9}, {"date": "2026-08-16", "timestamp": "2026-08-16T08:00:00", "total": 43, "affected": 18, "expired": 1, "totalDiscountValue": 899.12, "avgDiscountPercent": 24.3}, {"date": "2026-08-17", "timestamp": "2026-08-17T08:00:00", "total": 43, "affected": 9, "expired": 0, "totalDiscountValue": 290.32, "avgDiscountPercent": 17.9}, {"date": "2026-08-18", "timestamp": "2026-08-18T00:50:23", "total": 43, "affected": 15, "expired": 3, "totalDiscountValue": 446.27, "avgDiscountPercent": 16.9}, {"date": "2026-08-18", "timestamp": "2026-08-18T00:50:40", "total": 43, "affected": 15, "expired": 3, "totalDiscountValue": 446.27, "avgDiscountPercent": 16.9}, {"date": "2026-08-18", "timestamp": "2026-08-18T00:51:56", "total": 43, "affected": 15, "expired": 3, "totalDiscountValue": 446.27, "avgDiscountPercent": 16.9}, {"date": "2026-08-18", "timestamp": "2026-08-18T00:55:23", "total": 43, "affected": 15, "expired": 3, "totalDiscountValue": 446.27, "avgDiscountPercent": 16.9}, {"date": "2026-08-23", "timestamp": "2026-08-23T14:50:48", "total": 43, "affected": 14, "expired": 9, "totalDiscountValue": 360.27, "avgDiscountPercent": 13.8}, {"date": "2026-08-23", "timestamp": "2026-08-23T15:06:26", "total": 43, "affected": 14, "expired": 9, "totalDiscountValue": 360.27, "avgDiscountPercent": 13.8}, {"date": "2026-08-23", "timestamp": "2026-08-23T15:11:10", "total": 43, "affected": 14, "expired": 9, "totalDiscountValue": 360.27, "avgDiscountPercent": 13.8}, {"date": "2026-08-23", "timestamp": "2026-08-23T15:15:33", "total": 43, "affected": 14, "expired": 9, "totalDiscountValue": 360.27, "avgDiscountPercent": 13.8}, {"date": "2026-08-23", "timestamp": "2026-08-23T15:20:31", "total": 43, "affected": 14, "expired": 9, "totalDiscountValue": 360.27, "avgDiscountPercent": 13.8}, {"date": "2026-08-23", "timestamp": "2026-08-23T15:54:23", "total": 43, "affected": 14, "expired": 9, "totalDiscountValue": 360.27, "avgDiscountPercent": 13.8}, {"date": "2026-08-23", "timestamp": "2026-08-23T15:58:18", "total": 43, "affected": 14, "expired": 9, "totalDiscountValue": 360.27, "avgDiscountPercent": 13.8}, {"date": "2026-08-23", "timestamp": "2026-08-23T16:06:47", "total": 43, "affected": 14, "expired": 9, "totalDiscountValue": 360.27, "avgDiscountPercent": 13.8}, {"date": "2026-08-23", "timestamp": "2026-08-23T16:10:18", "total": 43, "affected": 14, "expired": 9, "totalDiscountValue": 360.27, "avgDiscountPercent": 13.8}, {"date": "2026-08-23", "timestamp": "2026-08-23T16:18:39", "total": 43, "affected": 14, "expired": 9, "totalDiscountValue": 360.27, "avgDiscountPercent": 13.8}, {"date": "2026-08-23", "timestamp": "2026-08-23T16:19:11", "total": 43, "affected": 14, "expired": 9, "totalDiscountValue": 360.27, "avgDiscountPercent": 13.8}], "lastUpdated": "2026-08-23", "levelOrder": ["во ред", "10% попуст", "20% попуст", "40% попуст", "ЗА ПОВЛЕКУВАЊЕ"], "categorical": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7"]};
+
+const STATUS_COLOR_LIGHT = {
+  "во ред": "#0ca30c",
+  "10% попуст": "#fab219",
+  "20% попуст": "#ec835a",
+  "40% попуст": "#d03b3b",
+  "ЗА ПОВЛЕКУВАЊЕ": "#d03b3b"
+};
+function fmt(n) {
+  return n.toLocaleString("mk-MK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+const products = [...DATA.products].sort((a, b) => {
+  const da = a.daysToExpiry === null ? Infinity : a.daysToExpiry;
+  const db = b.daysToExpiry === null ? Infinity : b.daysToExpiry;
+  return da - db;
+});
+
+const total = products.length;
+const affected = products.filter(p => p.discountPercent > 0).length;
+const expired = products.filter(p => p.status === "ЗА ПОВЛЕКУВАЊЕ").length;
+
+// ---- header ----
+document.getElementById("subtitle").textContent =
+  `${total} производи во базата · последно ажурирано ${new Date(DATA.lastUpdated).toLocaleDateString("mk-MK")}`;
+document.getElementById("footerNote").innerHTML =
+  `Извор: data/products.xlsx. Скала на попуст: 15-11 дена = 10%, 10-6 дена = 20%, 5-0 дена = 40%, ` +
+  `со бонус за голема залиха и заштита на минимална маржа. ` +
+  `Истечени производи се означуваат "ЗА ПОВЛЕКУВАЊЕ" и не се бришат автоматски.`;
+
+const marginProtected = products.filter(p => (p.note || "").includes("маржа")).length;
+const hist = DATA.history || [];
+const prevRun = hist.length >= 2 ? hist[hist.length - 2] : null;
+
+function deltaHtml(current, previous, higherIsBetter) {
+  if (previous === null || previous === undefined) return "";
+  const diff = current - previous;
+  if (Math.abs(diff) < 0.005) return `<span class="delta" style="color:var(--text-muted)">· без промена</span>`;
+  const up = diff > 0;
+  const good = higherIsBetter ? up : !up;
+  const arrow = up ? "▲" : "▼";
+  const cls = good ? "up" : "down";
+  const shown = Number.isInteger(current) && Number.isInteger(previous) ? Math.abs(diff) : fmt(Math.abs(diff));
+  return `<span class="delta ${cls}">${arrow} ${shown}</span> <span class="muted">vs минато пуштање</span>`;
+}
+
+// ---- KPI tiles ----
+const ICONS = {
+  box: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>',
+  tag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41L11 3.83A2 2 0 009.59 3H4a1 1 0 00-1 1v5.59a2 2 0 00.59 1.41l9.58 9.59a2 2 0 002.83 0l4.59-4.59a2 2 0 000-2.83z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>',
+  alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>',
+};
+const kpiRow = document.getElementById("kpiRow");
+const kpis = [
+  { label: "Вкупно производи", value: String(total), foot: "во базата", icon: "box", iconColor: "var(--series-1)" },
+  { label: "Со нов попуст", value: String(affected), foot: deltaHtml(affected, prevRun ? prevRun.affected : null, false), icon: "tag", iconColor: "var(--warning)" },
+  { label: "За повлекување", value: String(expired), foot: deltaHtml(expired, prevRun ? prevRun.expired : null, false) || (expired ? "потребна проверка" : "нема истечени"), critical: expired > 0, icon: "alert", iconColor: "var(--critical)" },
+  { label: "Заштитена маржа кај", value: String(marginProtected), foot: "производи не паднаа под минимална маржа", icon: "shield", iconColor: "var(--good)" },
+];
+kpiRow.innerHTML = kpis.map(k => `
+  <div class="tile">
+    <div class="tile-top">
+      <div class="label">${k.label}</div>
+      <div class="icon-chip" style="background:color-mix(in srgb, ${k.iconColor} 16%, transparent); color:${k.iconColor}">${ICONS[k.icon]}</div>
+    </div>
+    <div class="value${k.critical ? " critical" : ""}">${k.value}</div>
+    <div class="foot">${k.foot}</div>
+  </div>
+`).join("");
+
+// ---- table (со табови: Сите / Со попуст / За повлекување) ----
+const prodBody = document.getElementById("prodBody");
+const TABLE_FILTERS = {
+  all: p => true,
+  discount: p => p.discountPercent > 0,
+  expired: p => p.status === "ЗА ПОВЛЕКУВАЊЕ",
+};
+
+function renderProductRows(tab) {
+  const rows = products.filter(TABLE_FILTERS[tab]);
+  if (!rows.length) {
+    prodBody.innerHTML = `<tr><td colspan="7" class="muted" style="text-align:center;padding:20px">Нема производи во оваа категорија</td></tr>`;
+    return;
+  }
+  prodBody.innerHTML = rows.map(p => {
+    const color = STATUS_COLOR_LIGHT[p.status] || "#898781";
+    const urgent = p.status === "ЗА ПОВЛЕКУВАЊЕ" || p.status === "40% попуст";
+    const days = p.daysToExpiry === null ? "-" : p.daysToExpiry;
+    const stock = p.stock === null ? "-" : p.stock;
+    // значката покажува реален пресметан попуст (не тиерот од скалата)
+    const badgeText = p.discountPercent > 0 ? `${p.discountPercent}% попуст` : p.status;
+    return `
+      <tr class="${urgent ? "urgent" : ""}">
+        <td>${p.product}</td>
+        <td>${p.sku}</td>
+        <td class="num">${days}</td>
+        <td class="num">${stock}</td>
+        <td class="num">${fmt(p.price)}</td>
+        <td class="num">${fmt(p.newPrice)}</td>
+        <td><span class="cat-badge" style="background:${color}">${badgeText}</span></td>
+      </tr>`;
+  }).join("");
+}
+
+const tabCounts = {
+  all: products.length,
+  discount: products.filter(TABLE_FILTERS.discount).length,
+  expired: products.filter(TABLE_FILTERS.expired).length,
+};
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  const tab = btn.dataset.tab;
+  const baseLabel = btn.textContent;
+  btn.textContent = `${baseLabel} (${tabCounts[tab]})`;
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderProductRows(tab);
+  });
+});
+renderProductRows("all");
+
+// ---- ценовни стикери (визуелно, за pitch) ----
+(function renderStickers() {
+  const grid = document.getElementById("stickerGrid");
+  const discounted = products.filter(p => p.discountPercent > 0);
+  document.getElementById("stickersSub").textContent =
+    `Автоматски генерирани стикери за производите со активен попуст - за лепење на рафт (${discounted.length} стикери).`;
+  if (!discounted.length) {
+    grid.innerHTML = `<div class="sticker-empty">Нема производи со активен попуст во оваа проверка.</div>`;
+    return;
+  }
+  grid.innerHTML = discounted.map(p => `
+    <div class="sticker-card">
+      <span class="sticker-badge">-${p.discountPercent}%</span>
+      <div class="sticker-name">${p.product}</div>
+      <div class="sticker-old-price">${fmt(p.price)} ден.</div>
+      <div class="sticker-new-price">${fmt(p.newPrice)}<span class="unit">ден.</span></div>
+      <div class="sticker-footer">
+        <div class="sticker-barcode"></div>
+        <div class="sticker-sku">${p.sku}</div>
+      </div>
+    </div>
+  `).join("");
+})();
+
+// ---- навигација меѓу страници (Преглед / Ценовни стикери) ----
+document.querySelectorAll(".page-nav-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const page = btn.dataset.page;
+    document.querySelectorAll(".page-nav-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("page-overview").style.display = page === "overview" ? "" : "none";
+    document.getElementById("page-stickers").style.display = page === "stickers" ? "" : "none";
+  });
+});
+
+// ---- theme toggle ----
+const toggle = document.getElementById("themeToggle");
+toggle.addEventListener("click", () => {
+  const root = document.documentElement;
+  const current = root.getAttribute("data-theme");
+  root.setAttribute("data-theme", current === "dark" ? "light" : "dark");
+});
+</script>
+</body>
+</html>
