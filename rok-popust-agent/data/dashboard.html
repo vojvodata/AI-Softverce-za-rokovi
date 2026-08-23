@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rok-Popust Dashboard</title>
+<title>Софтвер за управување со истек на рокови</title>
 <style>
   :root {
     color-scheme: light;
@@ -438,18 +438,59 @@
       margin-top: 2px;
       border-top: 1px dashed var(--gridline);
     }
+
+    /* ---- прием на стока: поедноставена форма на телефон ---- */
+    #page-intake .intake-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+    }
+    #page-intake .intake-row label { min-width: 0; }
+    #page-intake .intake-row input,
+    #page-intake .intake-row button { width: 100%; }
+    #page-intake .panel-head {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+    #page-intake .panel-head button { width: 100%; }
+    .intake-log-item { flex-direction: column; align-items: flex-start; }
+
+    /* ---- каталог за скенирање: картички наместо табела ---- */
+    #catalogTable, #catalogTable tbody, #catalogTable tr, #catalogTable td {
+      display: block;
+      width: 100%;
+    }
+    #catalogTable tr {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: var(--surface-1);
+    }
+    #catalogTable td {
+      border-bottom: none;
+      padding: 3px 0;
+      text-align: left;
+    }
+    #catalogTable td:first-child {
+      font-size: 13.5px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    #catalogTable .catalog-barcode { display: block; width: fit-content; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="brand-row">
-    <span class="brand-dot"></span>
-    <span class="brand-name">Rok-Popust Agent</span>
+    <!-- <span class="brand-dot"></span> -->
+    <!-- <span class="brand-name">Rok-Popust Agent</span> -->
   </div>
   <header>
     <div>
-      <h1>Автоматска заштита на маржа пред истек на рок</h1>
+      <h1>Софтвер за управување со истек на рокови и оптимизација на попусти</h1>
       <div class="subtitle" id="subtitle"></div>
     </div>
     <button class="theme-toggle" id="themeToggle">🌓 Смени тема</button>
@@ -477,8 +518,8 @@
           <thead>
             <tr>
               <th>Производ</th>
-              <th>Број на артикал</th>
-              <th class="num">Денови до истек</th>
+              <th>Број на артикл</th>
+              <th class="num">Денови до истек на рок</th>
               <th class="num">Залиха</th>
               <th class="num">Стара цена</th>
               <th class="num">Цена со попуст</th>
@@ -540,7 +581,7 @@
       <div class="table-scroll">
         <table id="catalogTable">
           <thead>
-            <tr><th>Производ</th><th>Баркод</th><th class="num">Цена</th></tr>
+            <tr><th>Производ</th><th>Баркод</th></tr>
           </thead>
           <tbody id="catalogBody"></tbody>
         </table>
@@ -633,8 +674,9 @@ function daysBetween(expiryDateStr) {
 
 function tierFor(days) {
   if (days < 0) return null;      // истечено
-  if (days <= 5) return 40;
-  if (days <= 10) return 20;
+  if (days <= 1) return 50;       // денес/утре - последен шанс
+  if (days <= 3) return 30;
+  if (days <= 7) return 20;
   if (days <= 15) return 10;
   return 0;                        // во ред
 }
@@ -647,14 +689,20 @@ function computeDiscount(days, price, cost, stock) {
   if (tier === 0) {
     return { discountPercent: 0, newPrice: price, status: "во ред", note: "" };
   }
-  const stockBonus = stock >= 30 ? 10 : (stock >= 10 ? 5 : 0);
+  // бонус на попустот според вредноста на изложеноста (залиха x чинење), не бројот на парчиња -
+  // 30 парчиња од скап производ носат многу поголем финансиски ризик од 30 парчиња јефтин
+  const exposure = stock * cost;
+  const stockBonus = exposure >= 8000 ? 10 : (exposure >= 2500 ? 5 : 0);
   const tierPrice = price * (1 - (tier + stockBonus) / 100);
-  const floorPrice = cost * 1.10;
+  // минималната заштитена маржа се намалува како рокот се приближува - при 15 дена штитиме ~20% маржа,
+  // при 0-1 ден дозволуваме цена до чинење (0% маржа), бидејќи отпис е 100% загуба, а тоа е полошо од продажба без профит
+  const floorMarginPercent = 20 * Math.min(days, 15) / 15;
+  const floorPrice = cost * (1 + floorMarginPercent / 100);
   const marginProtected = floorPrice > tierPrice;
   const newPrice = Math.max(tierPrice, floorPrice);
   const discountPercent = Math.round((price - newPrice) / price * 1000) / 10;
   const parts = [];
-  if (stockBonus > 0) parts.push(`+${stockBonus}pp залиха (${stock} парчиња)`);
+  if (stockBonus > 0) parts.push(`+${stockBonus}pp вредност на залиха (${fmt(exposure)} ден.)`);
   if (marginProtected) parts.push("заштитена маржа");
   return { discountPercent, newPrice: Math.round(newPrice * 100) / 100, status: `${tier}% попуст`, note: parts.join("; ") };
 }
@@ -667,8 +715,9 @@ function enrich(p) {
 
 // ---- header (статичен дел) ----
 document.getElementById("footerNote").innerHTML =
-  `Извор: data/products.xlsx + прием на стока. Скала на попуст: 15-11 дена = 10%, 10-6 дена = 20%, 5-0 дена = 40%, ` +
-  `со бонус за голема залиха и заштита на минимална маржа. ` +
+  `Извор: data/products.xlsx + прием на стока. Скала на попуст: 15-8 дена = 10%, 7-4 дена = 20%, 3-2 дена = 30%, 1-0 дена = 50%, ` +
+  `со бонус според финансиската изложеност на залихата и заштита на маржата што се намалува како рокот се приближува ` +
+  `(до 0% - цена еднаква на чинењето - во последниот ден, за да се избегне целосен отпис). ` +
   `Истечени производи се означуваат "ЗА ПОВЛЕКУВАЊЕ" и не се бришат автоматски.`;
 
 const hist = DATA.history || [];
@@ -680,10 +729,10 @@ function deltaHtml(current, previous, higherIsBetter) {
   if (Math.abs(diff) < 0.005) return `<span class="delta" style="color:var(--text-muted)">· без промена</span>`;
   const up = diff > 0;
   const good = higherIsBetter ? up : !up;
-  const arrow = up ? "▲" : "▼";
   const cls = good ? "up" : "down";
   const shown = Number.isInteger(current) && Number.isInteger(previous) ? Math.abs(diff) : fmt(Math.abs(diff));
-  return `<span class="delta ${cls}">${arrow} ${shown}</span> <span class="muted">vs минато пуштање</span>`;
+  const sign = up ? "+" : "-";
+  return `<span class="delta ${cls}">${sign}${shown}</span>`;
 }
 
 // ---- KPI tiles ----
@@ -718,9 +767,13 @@ function renderProductRows(tab) {
   prodBody.innerHTML = rows.map(p => {
     const color = STATUS_COLOR_LIGHT[p.status] || "#898781";
     const urgent = p.status === "ЗА ПОВЛЕКУВАЊЕ" || p.status === "40% попуст";
-    const days = p.daysToExpiry === null ? "-" : p.daysToExpiry;
-    const stock = p.stock === null ? "-" : p.stock;
     const isWithdrawn = p.status === "ЗА ПОВЛЕКУВАЊЕ";
+    const days = p.daysToExpiry === null ? "-"
+      : isWithdrawn ? `Рокот е истечен пред ${Math.abs(p.daysToExpiry)} дена`
+      : p.daysToExpiry === 0 ? "Денес"
+      : p.daysToExpiry === 1 ? "Утре"
+      : p.daysToExpiry;
+    const stock = p.stock === null ? "-" : p.stock;
     const isUnchanged = !isWithdrawn && p.discountPercent === 0;
     const priceLabel = (isWithdrawn || isUnchanged) ? "Цена" : "Стара цена";
     const newPriceCell = (isWithdrawn || isUnchanged) ? `<td class="num"></td>` : `<td class="num price-discount" data-label="Цена со попуст">${fmt(p.newPrice)}</td>`;
@@ -729,8 +782,8 @@ function renderProductRows(tab) {
     return `
       <tr class="${urgent ? "urgent" : ""}">
         <td>${p.product}</td>
-        <td data-label="Број на артикал">${p.sku}</td>
-        <td class="num" data-label="Дена до истек">${days}</td>
+        <td data-label="Број на артикл">${p.sku}</td>
+        <td class="num" data-label="Денови до истек на рок">${days}</td>
         <td class="num" data-label="Залиха">${stock}</td>
         <td class="num" data-label="${priceLabel}">${fmt(p.price)}</td>
         ${newPriceCell}
@@ -944,7 +997,6 @@ function renderCatalogReference() {
         <div class="catalog-barcode">${ean13Svg(p.barcode, 40)}</div>
         <div class="barcode-mono">${p.barcode}</div>
       </td>
-      <td class="num">${fmt(p.price)}</td>
     </tr>
   `).join("");
 }
