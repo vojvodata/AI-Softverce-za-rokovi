@@ -700,7 +700,7 @@ function computeDiscount(days, price, cost, stock) {
   const floorPrice = cost * (1 + floorMarginPercent / 100);
   const marginProtected = floorPrice > tierPrice;
   const newPrice = Math.max(tierPrice, floorPrice);
-  const discountPercent = Math.round((price - newPrice) / price * 1000) / 10;
+  const discountPercent = Math.round((price - newPrice) / price * 100);
   const parts = [];
   if (stockBonus > 0) parts.push(`+${stockBonus}pp вредност на залиха (${fmt(exposure)} ден.)`);
   if (marginProtected) parts.push("заштитена маржа");
