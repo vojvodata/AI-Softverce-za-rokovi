@@ -142,7 +142,7 @@ def process(df, config, today):
             else:
                 new_price = round(desired_price, 2)
 
-            actual_pct = round((price - new_price) / price * 100, 1) if price else 0
+            actual_pct = int(round((price - new_price) / price * 100)) if price else 0
 
             days_list.append(days)
             base_pct_list.append(base_pct)
