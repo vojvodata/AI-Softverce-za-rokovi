@@ -704,7 +704,7 @@ function computeDiscount(days, price, cost, stock) {
   const parts = [];
   if (stockBonus > 0) parts.push(`+${stockBonus}pp вредност на залиха (${fmt(exposure)} ден.)`);
   if (marginProtected) parts.push("заштитена маржа");
-  return { discountPercent, newPrice: Math.round(newPrice * 100) / 100, status: `${tier}% попуст`, note: parts.join("; ") };
+  return { discountPercent, newPrice: Math.ceil(newPrice), status: `${tier}% попуст`, note: parts.join("; ") };
 }
 
 function enrich(p) {

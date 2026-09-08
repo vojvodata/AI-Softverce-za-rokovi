@@ -5,6 +5,7 @@ Cowork ја повикува main() директно - нема CLI аргуме
 """
 
 import json
+import math
 import os
 from datetime import date, datetime
 
@@ -135,12 +136,12 @@ def process(df, config, today):
             if has_cost and not pd.isna(cost):
                 floor_price = cost * (1 + min_margin / 100)
                 if desired_price < floor_price:
-                    new_price = round(max(floor_price, 0), 2)
+                    new_price = math.ceil(max(floor_price, 0))
                     notes.append("заштитена маржа")
                 else:
-                    new_price = round(desired_price, 2)
+                    new_price = math.ceil(desired_price)
             else:
-                new_price = round(desired_price, 2)
+                new_price = math.ceil(desired_price)
 
             actual_pct = int(round((price - new_price) / price * 100)) if price else 0
 
