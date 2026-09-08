@@ -645,7 +645,7 @@ const STATUS_COLOR_LIGHT = {{
   "ЗА ПОВЛЕКУВАЊЕ": "#d03b3b"
 }};
 function fmt(n) {{
-  return n.toLocaleString("mk-MK", {{ minimumFractionDigits: 2, maximumFractionDigits: 2 }});
+  return n.toLocaleString("mk-MK", {{ minimumFractionDigits: 0, maximumFractionDigits: 0 }});
 }}
 
 const products = [...DATA.products].sort((a, b) => {{
